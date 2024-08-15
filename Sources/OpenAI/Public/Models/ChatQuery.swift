@@ -20,10 +20,40 @@ public struct ResponseFormat: Codable, Equatable {
     }
 }
 
+public struct ChatContentItem: Codable, Equatable {
+    public enum ContentType: String, Codable, Equatable {
+        case text
+        case image
+    }
+    
+    public let type: ContentType
+    public let text: String?
+    public let imageUrl: String?
+    
+    // Ensure proper initialization based on type
+    public init(text: String) {
+        self.type = .text
+        self.text = text
+        self.imageUrl = nil
+    }
+    
+    public init(imageUrl: String) {
+        self.type = .image
+        self.text = nil
+        self.imageUrl = imageUrl
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case type
+        case text
+        case imageUrl = "image_url"
+    }
+}
+
 public struct Chat: Codable, Equatable {
     public let role: Role
     /// The contents of the message. `content` is required for all messages except assistant messages with function calls.
-    public let content: String?
+    public let content: [ChatContentItem]?
     /// The name of the author of this message. `name` is required if role is `function`, and it should be the name of the function whose response is in the `content`. May contain a-z, A-Z, 0-9, and underscores, with a maximum length of 64 characters.
     public let name: String?
     public let functionCall: ChatFunctionCall?
@@ -42,25 +72,25 @@ public struct Chat: Codable, Equatable {
         case functionCall = "function_call"
     }
     
-    public init(role: Role, content: String? = nil, name: String? = nil, functionCall: ChatFunctionCall? = nil) {
+    public init(role: Role, content: [ChatContentItem]? = nil, name: String? = nil, functionCall: ChatFunctionCall? = nil) {
         self.role = role
         self.content = content
         self.name = name
         self.functionCall = functionCall
     }
-
+    
     public func encode(to encoder: Encoder) throws {
         var container = encoder.container(keyedBy: CodingKeys.self)
         try container.encode(role, forKey: .role)
-
+        
         if let name = name {
             try container.encode(name, forKey: .name)
         }
-
+        
         if let functionCall = functionCall {
             try container.encode(functionCall, forKey: .functionCall)
         }
-
+        
         // Should add 'nil' to 'content' property for function calling response
         // See https://openai.com/blog/function-calling-and-other-api-updates
         if content != nil || (role == .assistant && functionCall != nil) {
@@ -68,6 +98,57 @@ public struct Chat: Codable, Equatable {
         }
     }
 }
+
+
+
+//public struct Chat: Codable, Equatable {
+//    public let role: Role
+//    /// The contents of the message. `content` is required for all messages except assistant messages with function calls.
+//    public let content: String?
+//    /// The name of the author of this message. `name` is required if role is `function`, and it should be the name of the function whose response is in the `content`. May contain a-z, A-Z, 0-9, and underscores, with a maximum length of 64 characters.
+//    public let name: String?
+//    public let functionCall: ChatFunctionCall?
+//    
+//    public enum Role: String, Codable, Equatable {
+//        case system
+//        case assistant
+//        case user
+//        case function
+//    }
+//    
+//    enum CodingKeys: String, CodingKey {
+//        case role
+//        case content
+//        case name
+//        case functionCall = "function_call"
+//    }
+//    
+//    public init(role: Role, content: String? = nil, name: String? = nil, functionCall: ChatFunctionCall? = nil) {
+//        self.role = role
+//        self.content = content
+//        self.name = name
+//        self.functionCall = functionCall
+//    }
+//
+//    public func encode(to encoder: Encoder) throws {
+//        var container = encoder.container(keyedBy: CodingKeys.self)
+//        try container.encode(role, forKey: .role)
+//
+//        if let name = name {
+//            try container.encode(name, forKey: .name)
+//        }
+//
+//        if let functionCall = functionCall {
+//            try container.encode(functionCall, forKey: .functionCall)
+//        }
+//
+//        // Should add 'nil' to 'content' property for function calling response
+//        // See https://openai.com/blog/function-calling-and-other-api-updates
+//        if content != nil || (role == .assistant && functionCall != nil) {
+//            try container.encode(content, forKey: .content)
+//        }
+//    }
+//}
 
 public struct ChatFunctionCall: Codable, Equatable {
     /// The name of the function to call.
