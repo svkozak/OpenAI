@@ -20,33 +20,52 @@ public struct ResponseFormat: Codable, Equatable {
     }
 }
 
+public struct ImageUrlObject: Codable, Equatable {
+    public let url: String
+    public var detail: String = "low"
+    
+    public init(url: String) {
+        self.url = url
+    }
+    
+    public init(url: String, detail: String) {
+        self.url = url
+        self.detail = detail
+    }
+    
+    enum CodingKeys: String, CodingKey {
+        case url
+        case detail
+    }
+}
+
 public struct ChatContentItem: Codable, Equatable {
     public enum ContentType: String, Codable, Equatable {
         case text
-        case image
+        case image_url
     }
     
     public let type: ContentType
     public let text: String?
-    public let imageUrl: String?
+    public let image_url: ImageUrlObject?
     
     // Ensure proper initialization based on type
     public init(text: String) {
         self.type = .text
         self.text = text
-        self.imageUrl = nil
+        self.image_url = nil
     }
     
-    public init(imageUrl: String) {
-        self.type = .image
+    public init(imageUrlObject: ImageUrlObject) {
+        self.type = .image_url
         self.text = nil
-        self.imageUrl = imageUrl
+        self.image_url = imageUrlObject
     }
     
     enum CodingKeys: String, CodingKey {
         case type
         case text
-        case imageUrl = "image_url"
+        case image_url = "image_url"
     }
 }
 
