@@ -72,7 +72,7 @@ public struct ChatContentItem: Codable, Equatable {
 public struct Chat: Codable, Equatable {
     public let role: Role
     /// The contents of the message. `content` is required for all messages except assistant messages with function calls.
-    public let content: [ChatContentItem]?
+    public var content: [ChatContentItem]?
     /// The name of the author of this message. `name` is required if role is `function`, and it should be the name of the function whose response is in the `content`. May contain a-z, A-Z, 0-9, and underscores, with a maximum length of 64 characters.
     public let name: String?
     public let functionCall: ChatFunctionCall?
@@ -116,6 +116,30 @@ public struct Chat: Codable, Equatable {
             try container.encode(content, forKey: .content)
         }
     }
+    
+    // Convenience methods
+    public mutating func addTextContent(_ text: String) {
+        let textContentItem = ChatContentItem(text: text)
+        if content == nil {
+            content = []
+        }
+        content?.append(textContentItem)
+    }
+
+    public mutating func addImageUrlContent(_ imageUrl: String, detail: String = "low") {
+        guard self.role == .user else {
+            return
+        }
+        
+        let imageUrlObject = ImageUrlObject(url: imageUrl, detail: detail)
+        let imageUrlContentItem = ChatContentItem(imageUrlObject: imageUrlObject)
+        
+        if content == nil {
+            content = []
+        }
+        content?.append(imageUrlContentItem)
+    }
+
 }
 
 
