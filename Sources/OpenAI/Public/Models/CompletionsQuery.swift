@@ -1,6 +1,6 @@
 //
 //  CompletionsQuery.swift
-//  
+//
 //
 //  Created by Sergii Kryvoblotskyi on 02/04/2023.
 //
@@ -26,6 +26,8 @@ public struct CompletionsQuery: Codable, Streamable {
     public let stop: [String]?
     /// A unique identifier representing your end-user, which can help OpenAI to monitor and detect abuse.
     public let user: String?
+    /// Maximum number of tokens for o1 models
+    public let maxCompletionTokens: Int?
     
     var stream: Bool = false
     
@@ -40,9 +42,10 @@ public struct CompletionsQuery: Codable, Streamable {
         case presencePenalty = "presence_penalty"
         case stop
         case user
+        case maxCompletionTokens = "max_completion_tokens"
     }
     
-    public init(model: Model, prompt: String, temperature: Double? = nil, maxTokens: Int? = nil, topP: Double? = nil, frequencyPenalty: Double? = nil, presencePenalty: Double? = nil, stop: [String]? = nil, user: String? = nil) {
+    public init(model: Model, prompt: String, temperature: Double? = nil, maxTokens: Int? = nil, topP: Double? = nil, frequencyPenalty: Double? = nil, presencePenalty: Double? = nil, stop: [String]? = nil, user: String? = nil, maxCompletionTokens: Int? = nil) {
         self.model = model
         self.prompt = prompt
         self.temperature = temperature
@@ -52,5 +55,6 @@ public struct CompletionsQuery: Codable, Streamable {
         self.presencePenalty = presencePenalty
         self.stop = stop
         self.user = user
+        self.maxCompletionTokens = maxCompletionTokens
     }
 }

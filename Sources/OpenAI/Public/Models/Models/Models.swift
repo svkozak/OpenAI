@@ -14,6 +14,7 @@ public extension Model {
     
     /// More capable than any GPT-3.5 model, able to do more complex tasks, and optimized for chat. Will be updated with our latest model iteration 2 weeks after it is released.
     static let gpt4 = "gpt-4"
+    static let gpt4o = "gpt-4o"
 
     /// GPT-4 Turbo, teh latest gpt-4 model with improved instruction following, JSON mode, reproducible outputs, parallel function calling and more.
     /// Maximum of 4096 output tokens
