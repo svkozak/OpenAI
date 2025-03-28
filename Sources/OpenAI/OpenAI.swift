@@ -27,18 +27,23 @@ final public class OpenAI: OpenAIProtocol {
     /// Optional base path that goes after host and before the API path. Default is nil, e.g. `/api`
     public let basePath: String?
 
+    /// Optional Azure URL
+    public let azureURL: String?
+
     /// Default request timeout
     public let timeoutInterval: TimeInterval
 
     public init(
       token: String, organizationIdentifier: String? = nil, host: String = "api.openai.com",
-      basePath: String? = nil, timeoutInterval: TimeInterval = 60.0
+      basePath: String? = nil, timeoutInterval: TimeInterval = 60.0,
+      azureURL: String? = nil
     ) {
       self.token = token
       self.organizationIdentifier = organizationIdentifier
       self.host = host
       self.basePath = basePath
       self.timeoutInterval = timeoutInterval
+      self.azureURL = azureURL
     }
   }
 
@@ -62,24 +67,6 @@ final public class OpenAI: OpenAIProtocol {
 
   public convenience init(configuration: Configuration, session: URLSession = URLSession.shared) {
     self.init(configuration: configuration, session: session as URLSessionProtocol)
-  }
-
-  public func completions(
-    query: CompletionsQuery, completion: @escaping (Result<CompletionsResult, Error>) -> Void
-  ) {
-    performRequest(
-      request: JSONRequest<CompletionsResult>(body: query, url: buildURL(path: .completions)),
-      completion: completion)
-  }
-
-  public func completionsStream(
-    query: CompletionsQuery, onResult: @escaping (Result<CompletionsResult, Error>) -> Void,
-    completion: ((Error?) -> Void)?
-  ) {
-    performSteamingRequest(
-      request: JSONRequest<CompletionsResult>(
-        body: query.makeStreamable(), url: buildURL(path: .completions)), onResult: onResult,
-      completion: completion)
   }
 
   public func images(
@@ -188,6 +175,7 @@ extension OpenAI {
   func performRequest<ResultType: Codable>(
     request: any URLRequestBuildable, completion: @escaping (Result<ResultType, Error>) -> Void
   ) {
+    print("performRequest")
     do {
       let request = try request.build(
         token: configuration.token,
@@ -295,6 +283,11 @@ extension OpenAI {
 extension OpenAI {
 
   func buildURL(path: String) -> URL {
+
+    if configuration.azureURL != nil {
+      return URL(string: configuration.azureURL!)!
+    }
+
     var components = URLComponents()
     components.scheme = "https"
     components.host = configuration.host
@@ -303,6 +296,8 @@ extension OpenAI {
     } else {
       components.path = path
     }
+    print(components.url!)
+
     return components.url!
   }
 }
@@ -310,9 +305,9 @@ extension OpenAI {
 typealias APIPath = String
 extension APIPath {
 
-  static let completions = "/v1/completions"
+  static let chats = "/v1/chat/completions"  // main chats
+
   static let embeddings = "/v1/embeddings"
-  static let chats = "/v1/chat/completions"
   static let edits = "/v1/edits"
   static let models = "/v1/models"
   static let moderations = "/v1/moderations"

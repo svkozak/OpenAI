@@ -70,6 +70,8 @@ public struct ChatResponse: Codable, Equatable {
     /// The name of the author of this message. `name` is required if role is `function`, and it should be the name of the function whose response is in the `content`. May contain a-z, A-Z, 0-9, and underscores, with a maximum length of 64 characters.
     public let name: String?
 
+    public let id: String = ""
+
     public enum Role: String, Codable, Equatable {
         case system
         case assistant
@@ -79,6 +81,7 @@ public struct ChatResponse: Codable, Equatable {
         case role
         case content
         case name
+        case id
     }
 
     public init(role: Role, content: String? = nil, name: String? = nil) {
