@@ -175,7 +175,6 @@ extension OpenAI {
   func performRequest<ResultType: Codable>(
     request: any URLRequestBuildable, completion: @escaping (Result<ResultType, Error>) -> Void
   ) {
-    print("performRequest")
     do {
       let request = try request.build(
         token: configuration.token,
@@ -288,17 +287,17 @@ extension OpenAI {
       return URL(string: configuration.azureURL!)!
     }
 
-    var components = URLComponents()
-    components.scheme = "https"
-    components.host = configuration.host
-    if let basePath = configuration.basePath {
-      components.path = basePath + path
-    } else {
-      components.path = path
-    }
-    print(components.url!)
+    let cleanedHost = configuration.host
+      .replacingOccurrences(of: "https://", with: "")
+      .replacingOccurrences(of: "http://", with: "")
 
-    return components.url!
+    let newUrl = "https://\(cleanedHost)\(path)"
+
+    guard let url = URL(string: newUrl) else {
+      fatalError("Invalid URL: \(newUrl)")
+    }
+
+    return url
   }
 }
 
