@@ -168,6 +168,7 @@ final public class OpenAI: OpenAIProtocol {
       completion: completion)
   }
 
+  var sessionTasks: [URLSessionDataTaskProtocol] = []
 }
 
 extension OpenAI {
@@ -180,7 +181,7 @@ extension OpenAI {
         token: configuration.token,
         organizationIdentifier: configuration.organizationIdentifier,
         timeoutInterval: configuration.timeoutInterval)
-      let task = session.dataTask(with: request) { data, _, error in
+      let task: any URLSessionDataTaskProtocol = session.dataTask(with: request) { data, _, error in
         if let error = error {
           completion(.failure(error))
           return
@@ -208,6 +209,7 @@ extension OpenAI {
         }
       }
       task.resume()
+      self.sessionTasks.append(task)
     } catch {
       completion(.failure(error))
     }
@@ -301,10 +303,28 @@ extension OpenAI {
   }
 }
 
+extension OpenAI {
+  /// Cancels all requests and streaming sessions
+  public func cancelRequest() {
+    streamingSessions.forEach { session in
+      if let streamingSession = session as? StreamingSession<ChatStreamResult> {
+        streamingSession.cancel()
+      }
+    }
+    streamingSessions.removeAll()
+
+    sessionTasks.forEach { task in
+      if let urlSessionTask = task as? URLSessionDataTask {
+        urlSessionTask.cancel()
+      }
+    }
+  }
+}
+
 typealias APIPath = String
 extension APIPath {
 
-  static let chats = "/v1/chat/completions"  // main chats
+  static let chats = "/v1/chat/completions"  // main chats, v1/completions is deprecated
 
   static let embeddings = "/v1/embeddings"
   static let edits = "/v1/edits"

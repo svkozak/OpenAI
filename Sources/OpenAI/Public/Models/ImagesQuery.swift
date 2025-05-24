@@ -34,7 +34,13 @@ public struct ImagesQuery: Codable {
     /// The quality of the image that will be generated. hd creates images with finer details and greater consistency across the image. This param is only supported for dall-e-3.
     public let quality: String?
     
-    public init(prompt: String, model: Model?=nil, responseFormat: Self.ResponseFormat?=nil, n: Int?, size: String?, style: String?=nil, user:String?=nil, quality:String?=nil) {
+    // Properties for GPT Image
+    public let background: String?
+    public let moderation: String?
+    public let outputCompression: Int?
+    public let outputFormat: String?
+
+    public init(prompt: String, model: Model?=nil, responseFormat: Self.ResponseFormat?=nil, n: Int?, size: String?, style: String?=nil, user: String?=nil, quality: String?=nil, background: String? = nil, moderation: String? = nil, outputCompression: Int?=nil, outputFormat: String? = nil) {
         self.style = style
         self.prompt = prompt
         self.n = n
@@ -43,6 +49,10 @@ public struct ImagesQuery: Codable {
         self.responseFormat = responseFormat
         self.user = user
         self.quality = quality
+        self.background = background
+        self.moderation = moderation
+        self.outputCompression = outputCompression
+        self.outputFormat = outputFormat
     }
     
     public enum CodingKeys: String, CodingKey {
@@ -54,5 +64,9 @@ public struct ImagesQuery: Codable {
         case style
         case responseFormat = "response_format"
         case quality
+        case background
+        case moderation
+        case outputCompression = "output_compression"
+        case outputFormat = "output_format"
     }
 }

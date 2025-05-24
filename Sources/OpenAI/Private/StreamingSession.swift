@@ -18,6 +18,7 @@ final class StreamingSession<ResultType: Codable>: NSObject, Identifiable, URLSe
   enum StreamingError: Error {
     case unknownContent
     case emptyContent
+    case streamCancelled
   }
 
   var onReceiveContent: ((StreamingSession, ResultType) -> Void)?
@@ -34,14 +35,19 @@ final class StreamingSession<ResultType: Codable>: NSObject, Identifiable, URLSe
 
   private var previousChunkBuffer = ""
 
+  private var dataTask: URLSessionDataTask?
+
   init(urlRequest: URLRequest) {
     self.urlRequest = urlRequest
   }
 
   func perform() {
-    self.urlSession
-      .dataTask(with: self.urlRequest)
-      .resume()
+    self.dataTask = self.urlSession.dataTask(with: self.urlRequest)
+    self.dataTask?.resume()
+  }
+
+  func cancel() {
+    self.dataTask?.cancel()
   }
 
   func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
@@ -61,20 +67,26 @@ final class StreamingSession<ResultType: Codable>: NSObject, Identifiable, URLSe
 extension StreamingSession {
 
   private func processJSON(from stringContent: String) {
+    #if DEBUG
+      // print("Raw chunk received: \(stringContent.replacingOccurrences(of: "\n", with: "\\n"))")
+    #endif
 
-//    print("processJSON: \(stringContent)")
-
-    let jsonObjects = "\(previousChunkBuffer)\(stringContent)"
+    // First, filter out any OpenRouter processing content
+    // Some responses contained several : OPENROUTER PROCESSING markers in one chunk (esp. with reasoning)
+    let cleanedContent = stringContent
+      .components(separatedBy: .newlines)
+      .filter { !$0.starts(with: openRouterMarker) }
+      .joined(separator: "\n")
+    
+    // Combine with previous buffer and split by "data:"
+    let jsonObjects = "\(previousChunkBuffer)\(cleanedContent)"
       .components(separatedBy: "data:")
       .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-      .filter { $0.isEmpty == false }
+      .filter { $0.isEmpty == false && $0 != streamingCompletionMarker }
 
     previousChunkBuffer = ""
 
-    guard jsonObjects.isEmpty == false,
-      jsonObjects.first != streamingCompletionMarker,
-      jsonObjects.first != openRouterMarker
-    else {
+    guard jsonObjects.isEmpty == false else {
       return
     }
     jsonObjects.enumerated().forEach { (index, jsonContent) in
